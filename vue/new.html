@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="https://unpkg.com/vue@3.2.37/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+      .card-enter-active,
+      .card-leave-active {
+        transition: transform 0.5s, opacity 0.5s;
+      }
+      .card-enter-from,
+      .card-leave-to {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+      .location-color-0 {
+        color: #1e90ff;
+      }
+      .location-color-1 {
+        color: #32cd32;
+      }
+      .location-color-2 {
+        color: #ff4500;
+      }
+      .location-color-3 {
+        color: #ffd700;
+      }
+      .location-color-4 {
+        color: #8a2be2;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100">
+    <div id="app" class="container mx-auto p-4">
+      <h1 class="text-3xl font-bold text-center mb-8">API Exam Data</h1>
+      <button
+        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-3"
+        @click="showAddModal = true;clearCard();"
+      >
+        Add Card
+      </button>
+
+      <!-- Add Card Modal -->
+      <div class="fixed z-10 inset-0 overflow-y-auto" v-if="showAddModal">
+        <div
+          class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
+        >
+          <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+            <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+          </div>
+          <span
+            class="hidden sm:inline-block sm:align-middle sm:h-screen"
+            aria-hidden="true"
+            >&#8203;</span
+          >
+          <div
+            class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+          >
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+              <div class=" w-full">
+                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                  <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    {{ isEdit ? 'Edit Card' : 'Add Card' }}
+                  </h3>
+                  <div class="mt-2">
+                    <form @submit.prevent="validateForm">
+                      <div class="mb-4">
+                        <label
+                          for="title"
+                          class="block text-gray-700 text-sm font-bold mb-2"
+                          >Title</label
+                        >
+                        <input
+                          type="text"
+                          id="title"
+                          v-model="newCard.Title"
+                          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          
+                        />
+                        <p v-if="errors.Title" class="text-red-500 text-xs italic">{{ errors.Title }}</p>
+                      </div>
+                      <div class="mb-4">
+                        <label
+                          for="description"
+                          class="block text-gray-700 text-sm font-bold mb-2"
+                          >Description</label
+                        >
+                        <input
+                          type="text"
+                          id="description"
+                          v-model="newCard.Description"
+                          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          
+                        />
+                        <p v-if="errors.Description" class="text-red-500 text-xs italic">{{ errors.Description }}</p>
+                      </div>
+                      <div class="mb-4">
+                        <label
+                          for="candidateName"
+                          class="block text-gray-700 text-sm font-bold mb-2"
+                          >Candidate Name</label
+                        >
+                        <input
+                          type="text"
+                          id="candidateName"
+                          v-model="newCard.CandidateName"
+                          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          
+                        />
+                        <p v-if="errors.CandidateName" class="text-red-500 text-xs italic">{{ errors.CandidateName }}</p>
+                      </div>
+                      <div class="mb-4">
+                        <label
+                          for="date"
+                          class="block text-gray-700 text-sm font-bold mb-2"
+                          >Date</label
+                        >
+                        <input
+                          type="datetime-local"
+                          id="date"
+                          v-model="newCard.Date"
+                          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          
+                        />
+                        <p v-if="errors.Date" class="text-red-500 text-xs italic">{{ errors.Date }}</p>
+                      </div>
+                      <div class="mb-4">
+                        <label
+                          for="locationName"
+                          class="block text-gray-700 text-sm font-bold mb-2"
+                          >Location Name</label
+                        >
+                        <select
+                          id="locationName"
+                          v-model="newCard.LocationName"
+                          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          
+                        >
+                          <option value="">Select Location</option>
+                          <option value="London">London</option>
+                          <option value="Sydney">Sydney</option>
+                          <option value="Berlin">Berlin</option>
+                          <option value="New York">New York</option>
+                        </select>
+                        <p v-if="errors.LocationName" class="text-red-500 text-xs italic">{{ errors.LocationName }}</p>
+                      </div>
+                      <div class="mb-4">
+                        <label
+                          for="latitude"
+                          class="block text-gray-700 text-sm font-bold mb-2"
+                          >Latitude</label
+                        >
+                        <input
+                          type="text"
+                          id="latitude"
+                          v-model="newCard.Latitude"
+                          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          
+                        />
+                        <p v-if="errors.Latitude" class="text-red-500 text-xs italic">{{ errors.Latitude }}</p>
+                      </div>
+                      <div class="mb-4">
+                        <label
+                          for="longitude"
+                          class="block text-gray-700 text-sm font-bold mb-2"
+                          >Longitude</label
+                        >
+                        <input
+                          type="text"
+                          id="longitude"
+                          v-model="newCard.Longitude"
+                          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          
+                        />
+                        <p v-if="errors.Longitude" class="text-red-500 text-xs italic">{{ errors.Longitude }}</p>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <button
+                          type="submit"
+                          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        >
+                          {{ isEdit ? 'Update' : 'Add' }}
+                        </button>
+                        <button
+                          type="button"
+                          class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                          @click="showAddModal = false; isEdit = false"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-center mb-4">
+        <button
+          v-for="category in categories"
+          :key="category"
+          @click="selectedCategory = category"
+          :class="{'bg-blue-500 text-white': selectedCategory === category, 'bg-gray-200': selectedCategory !== category}"
+          class="px-4 py-2 rounded mx-1"
+        >
+          {{ category }}
+        </button>
+      </div>
+      <input
+        type="text"
+        v-model="searchQuery"
+        placeholder="Search..."
+        class="mb-4 p-2 border rounded w-full"
+      />
+      <button
+        @click="showFilters = !showFilters"
+        class="mb-4 bg-blue-500 text-white px-4 py-2 rounded"
+      >
+        Toggle Filters
+      </button>
+      <button
+        @click="showFilters = !showFilters"
+        class="mb-4 bg-blue-500 text-white px-4 py-2 rounded"
+      >
+        Toggle Filters
+      </button>
+      <div v-if="showFilters" class="mb-4 p-4 border rounded bg-white">
+        <label class="block mb-2">
+          <span class="text-gray-700">Filter by Candidate Name:</span>
+          <input
+            type="text"
+            v-model="filterCandidateName"
+            placeholder="Candidate Name"
+            class="mt-1 p-2 border rounded w-full"
+          />
+        </label>
+        <label class="block mb-2">
+          <span class="text-gray-700">Filter by Date Range:</span>
+          <input
+            type="date"
+            v-model="filterStartDate"
+            class="mt-1 p-2 border rounded w-full"
+          />
+          <input
+            type="date"
+            v-model="filterEndDate"
+            class="mt-1 p-2 border rounded w-full"
+          />
+        </label>
+        <button
+          @click="applyFilters"
+          class="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Apply Filters
+        </button>
+      </div>
+      <transition-group
+        name="card"
+        tag="div"
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+      >
+        <div
+          v-for="exam in filteredExams"
+          :key="exam.id"
+          class="bg-white rounded-lg shadow-md p-6 cursor-pointer transform transition duration-500 hover:scale-105"
+          @click="showDetails(exam)"
+        >
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold mb-2">{{ exam.Title }}</h2>
+            <div class="flex">
+              <button
+                @click.stop="deleteCard(exam.id)"
+                class="group hover:bg-red-500/30 text-white px-2 py-1 w-auto rounded"
+              >
+                <svg
+                  height="20px"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="gorup-hover:text-white fill-red-500 gorup-hover:!fill-white"
+                  viewBox="0 0 32 32"
+                  id="delete"
+                >
+                  <path
+                    d="M24.2,12.193,23.8,24.3a3.988,3.988,0,0,1-4,3.857H12.2a3.988,3.988,0,0,1-4-3.853L7.8,12.193a1,1,0,0,1,2-.066l.4,12.11a2,2,0,0,0,2,1.923h7.6a2,2,0,0,0,2-1.927l.4-12.106a1,1,0,0,1,2,.066Zm1.323-4.029a1,1,0,0,1-1,1H7.478a1,1,0,0,1,0-2h3.1a1.276,1.276,0,0,0,1.273-1.148,2.991,2.991,0,0,1,2.984-2.694h2.33a2.991,2.991,0,0,1,2.984,2.694,1.276,1.276,0,0,0,1.273,1.148h3.1A1,1,0,0,1,25.522,8.164Zm-11.936-1h4.828a3.3,3.3,0,0,1-.255-.944,1,1,0,0,0-.994-.9h-2.33a1,1,0,0,0-.994.9A3.3,3.3,0,0,1,13.586,7.164Zm1.007,15.151V13.8a1,1,0,0,0-2,0v8.519a1,1,0,0,0,2,0Zm4.814,0V13.8a1,1,0,0,0-2,0v8.519a1,1,0,0,0,2,0Z"
+                  />
+                </svg>
+              </button>
+
+              <button
+                @click.stop="editCard(exam.id)"
+                class="group hover:bg-blue-500/30 text-white px-2 py-1 w-auto rounded"
+              >
+                <svg
+                  height="20px"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="svg-icon fill-blue-500 text-blue-500"
+                  style="
+                    vertical-align: middle;
+                    fill: currentColor;
+                    overflow: hidden;
+                  "
+                  viewBox="0 0 1024 1024"
+                  version="1.1"
+                >
+                  <path
+                    d="M834.3 705.7c0 82.2-66.8 149-149 149H325.9c-82.2 0-149-66.8-149-149V346.4c0-82.2 66.8-149 149-149h129.8v-42.7H325.9c-105.7 0-191.7 86-191.7 191.7v359.3c0 105.7 86 191.7 191.7 191.7h359.3c105.7 0 191.7-86 191.7-191.7V575.9h-42.7v129.8z"
+                  />
+                  <path
+                    d="M889.7 163.4c-22.9-22.9-53-34.4-83.1-34.4s-60.1 11.5-83.1 34.4L312 574.9c-16.9 16.9-27.9 38.8-31.2 62.5l-19 132.8c-1.6 11.4 7.3 21.3 18.4 21.3 0.9 0 1.8-0.1 2.7-0.2l132.8-19c23.7-3.4 45.6-14.3 62.5-31.2l411.5-411.5c45.9-45.9 45.9-120.3 0-166.2zM362 585.3L710.3 237 816 342.8 467.8 691.1 362 585.3zM409.7 730l-101.1 14.4L323 643.3c1.4-9.5 4.8-18.7 9.9-26.7L436.3 720c-8 5.2-17.1 8.7-26.6 10z m449.8-430.7l-13.3 13.3-105.7-105.8 13.3-13.3c14.1-14.1 32.9-21.9 52.9-21.9s38.8 7.8 52.9 21.9c29.1 29.2 29.1 76.7-0.1 105.8z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <p class="text-gray-600">{{ exam.Description }}</p>
+          <p class="text-gray-600">{{ exam.CandidateName }}</p>
+          <p class="text-gray-600">{{ formatDate(exam.Date) }}</p>
+          <p :class="getLocationClass(exam.LocationName)">
+            <span class="font-bold">{{ exam.LocationName }}</span>
+          </p>
+        </div>
+      </transition-group>
+
+      <div
+        v-if="selectedExam"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+      >
+        <div
+          class="bg-white rounded-lg shadow-lg p-6 w-11/12 md:w-1/2 lg:w-1/3"
+        >
+          <h2 class="text-2xl font-bold mb-4">{{ selectedExam.Title }}</h2>
+          <p><strong>Description:</strong> {{ selectedExam.Description }}</p>
+          <p>
+            <strong>Candidate Name:</strong> {{ selectedExam.CandidateName }}
+          </p>
+          <p><strong>Date:</strong> {{ formatDate(selectedExam.Date) }}</p>
+          <p>
+            <strong>Location Name:</strong>
+            <span
+              :class="getLocationClass(selectedExam.LocationName)"
+              class="font-bold"
+              >{{ selectedExam.LocationName }}</span
+            >
+          </p>
+          <div
+            id="map_canvas"
+            class="my-4"
+            style="width: 100%; height: 300px"
+          ></div>
+          <button
+            class="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+            @click="selectedExam = null"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+
+      <div
+        v-if="loading"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+      >
+        <div class="loader"></div>
+      </div>
+    </div>
+
+    <script>
+      Vue.createApp({
+        data() {
+          return {
+            exams: [],
+            categories: [],
+            selectedCategory: "All",
+            searchQuery: "",
+            filterCandidateName: "",
+            filterStartDate: "",
+            filterEndDate: "",
+            showFilters: false,
+            selectedExam: null,
+            loading: false,
+            showAddModal: false,
+            isEdit: false,
+            errors: {},
+            newCard: {
+              Title: "",
+              Description: "",
+              CandidateName: "",
+              Date: "",
+              LocationName: "",
+              Latitude: "",
+              Longitude: "",
+            },
+          };
+        },
+        created() {
+          this.fetchData();
+        },
+        methods: {
+          async fetchData() {
+            try {
+               // local PHP server 
+              // "http://localhost/vic-php-api/api/exam/exams.php",
+
+              // API server
+              // "https://victvs-exam.futsalify.com/api/exam/exams.php",
+              const response = await fetch(
+                "https://victvs-exam.futsalify.com/api/exam/exams.php",
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                  },
+                  body: JSON.stringify({
+                    authCode: "your_secure_auth_victvs",
+                  }),
+                }
+              );
+
+              if (!response.ok) {
+                throw new Error("Network response was not ok");
+              }
+
+              const data = await response.json();
+              console.log("data", data);
+              this.exams = data.Exams;
+              this.categories = [
+                "All",
+                ...new Set(data.Exams.map((exam) => exam.LocationName)),
+              ];
+            } catch (error) {
+              console.error("Error:", error);
+            }
+          },
+
+          editCard(id) {
+            this.isEdit = true;
+            const index = this.exams.findIndex((exam) => exam.id === id);
+            this.showAddModal = true;
+            this.newCard = { ...this.exams[index] };
+            this.newCard.Date = this.formatDate(this.newCard.Date, true);
+          },
+          updateCard() {
+            const index = this.exams.findIndex(
+              (exam) => exam.id === this.newCard.id
+            );
+            this.exams[index] = { ...this.newCard };
+            this.showAddModal = false;
+            this.isEdit = false;
+            this.newCard = {
+              Title: "",
+              Description: "",
+              CandidateName: "",
+              Date: "",
+              LocationName: "",
+              Latitude: "",
+              Longitude: "",
+            };
+          },
+
+          deleteCard(id) {
+            const index = this.exams.findIndex((exam) => exam.id === id);
+            if (index !== -1) {
+              this.exams.splice(index, 1);
+            }
+          },
+          addCard() {
+            
+            this.isEdit = false;
+            const newExam = {
+              id: this.exams.length,
+              ...this.newCard,
+            };
+            this.exams.push(newExam);
+            this.showAddModal = false;
+            this.clearCard();
+            
+          },
+          showDetails(exam) {
+            this.selectedExam = exam;
+            setTimeout(() => {
+              this.initializeMap(exam.Latitude, exam.Longitude);
+            }, 100);
+          },
+          clearCard() {
+            this.newCard = {
+              Title: "",
+              Description: "",
+              CandidateName: "",
+              Date: "",
+              LocationName: "",
+              Latitude: "",
+              Longitude: "",
+            };
+          },
+          formatDate(date, forInput = false) {
+            const parsedDate = new Date(date);
+            if (isNaN(parsedDate)) {
+              // Try to parse the date manually if the Date object fails
+              const parts = date.split(/[-T:\/\s:]/);
+              if (parts.length >= 5) {
+                const day = parts[0].padStart(2, "0");
+                const month = parts[1].padStart(2, "0");
+                const year = parts[2];
+                const hour = parts[3].padStart(2, "0");
+                const minute = parts[4].padStart(2, "0");
+                return forInput
+                  ? `${year}-${month}-${day}T${hour}:${minute}`
+                  : `${day}/${month}/${year} ${hour}:${minute}`;
+              }
+              return "Invalid Date";
+            }
+
+            const day = String(parsedDate.getDate()).padStart(2, "0");
+            const month = String(parsedDate.getMonth() + 1).padStart(2, "0"); // Months are zero-based
+            const year = parsedDate.getFullYear();
+            const hour = String(parsedDate.getHours()).padStart(2, "0");
+            const minute = String(parsedDate.getMinutes()).padStart(2, "0");
+
+            return forInput
+              ? `${year}-${month}-${day}T${hour}:${minute}`
+              : `${day}/${month}/${year} ${hour}:${minute}`;
+          },
+          getLocationClass(locationName) {
+            const locationColors = {
+              London: "location-color-0",
+              Sydney: "location-color-1",
+              Berlin: "location-color-2",
+              "New York": "location-color-3",
+            };
+            return locationColors[locationName] || "location-color-4";
+          },
+          applyFilters() {
+            this.loading = true;
+            setTimeout(() => {
+              this.loading = false;
+            }, 500);
+          },
+          validateForm() {
+            this.errors = {};
+            if (!this.newCard.Title) {
+              this.errors.Title = "Title is required.";
+            }
+
+            if (!this.newCard.Description) {
+              this.errors.Description = "Description is required.";
+            }
+
+            if (!this.newCard.CandidateName) {
+              this.errors.CandidateName = "Candidate Name is required.";
+            }
+
+            if (!this.newCard.Date) {
+              this.errors.Date = "Date is required.";
+            }
+
+            if (!this.newCard.LocationName) {
+              this.errors.LocationName = "Location Name is required.";
+            }
+
+            if (!this.newCard.Latitude || isNaN(this.newCard.Latitude)) {
+              this.errors.Latitude = "Valid Latitude is required.";
+            }
+            if (!this.newCard.Longitude || isNaN(this.newCard.Longitude)) {
+              this.errors.Longitude = "Valid Longitude is required.";
+            }
+            if (Object.keys(this.errors).length === 0) {
+              this.isEdit ? this.updateCard() : this.addCard();
+            }
+          },
+          initializeMap(lat, lng) {
+            const myLatlng = new google.maps.LatLng(lat, lng);
+            const myOptions = {
+              zoom: 8,
+              center: myLatlng,
+              mapTypeId: google.maps.MapTypeId.ROADMAP,
+            };
+            const map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+          },
+        },
+        computed: {
+          filteredExams() {
+            let filtered = this.exams;
+            if (this.searchQuery) {
+              filtered = filtered.filter(
+                (exam) =>
+                  exam.Title.toLowerCase().includes(
+                    this.searchQuery.toLowerCase()
+                  ) ||
+                  exam.Description.toLowerCase().includes(
+                    this.searchQuery.toLowerCase()
+                  ) ||
+                  exam.CandidateName.toLowerCase().includes(
+                    this.searchQuery.toLowerCase()
+                  ) ||
+                  exam.LocationName.toLowerCase().includes(
+                    this.searchQuery.toLowerCase()
+                  )
+              );
+            }
+            if (this.selectedCategory !== "All") {
+              filtered = filtered.filter(
+                (exam) => exam.LocationName === this.selectedCategory
+              );
+            }
+            if (this.filterCandidateName) {
+              filtered = filtered.filter((exam) =>
+                exam.CandidateName.toLowerCase().includes(
+                  this.filterCandidateName.toLowerCase()
+                )
+              );
+            }
+            if (this.filterStartDate) {
+              filtered = filtered.filter(
+                (exam) => new Date(exam.Date) >= new Date(this.filterStartDate)
+              );
+            }
+            if (this.filterEndDate) {
+              filtered = filtered.filter(
+                (exam) => new Date(exam.Date) <= new Date(this.filterEndDate)
+              );
+            }
+            return filtered.sort((a, b) => new Date(a.Date) - new Date(b.Date));
+          },
+        },
+        watch: {
+          searchQuery() {
+            this.loading = true;
+            setTimeout(() => {
+              this.loading = false;
+            }, 500);
+          },
+        },
+        mounted() {
+          const script = document.createElement("script");
+          script.type = "text/javascript";
+          script.src = "http://maps.google.com/maps/api/js?sensor=false";
+          document.body.appendChild(script);
+        },
+      }).mount("#app");
+    </script>
+  </body>
+</html>
