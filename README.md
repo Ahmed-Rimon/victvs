@@ -43,19 +43,24 @@ The Vue project uses a CDN and does not require additional setup. Simply open th
    npm install && npm run build
    composer install
    ```
-3. Set up the database:
-   - Ensure you have a MySQL database named `victvs` created on your system.
-   - Update the `.env` file in the Laravel project to include your database credentials:
+3. Set up the environment file:
+   - Copy `.env.example` to `.env`:
+     ```bash
+     cp .env.example .env
+     ```
+   - Update the `.env` file to include your database credentials:
      ```env
      DB_DATABASE=victvs
-     DB_USERNAME=root
-     DB_PASSWORD=
+     DB_USERNAME=your_username
+     DB_PASSWORD=your_password
      ```
-4. Run database migrations:
+4. Set up the database:
+   - Ensure you have a MySQL database named `victvs` created on your system.
+5. Run database migrations:
    ```bash
    php artisan migrate
    ```
-5. Start the development server:
+6. Start the development server:
    ```bash
    composer run dev
    ```
